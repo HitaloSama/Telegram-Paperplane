@@ -1,6 +1,7 @@
 Pillow>=5.3.0
 aiohttp
 cowpy
+deezloader
 emoji
 gTTS>=2.1.1
 gTTS-token>=1.1.3

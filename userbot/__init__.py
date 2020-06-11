@@ -52,6 +52,8 @@ API_HASH = os.environ.get("API_HASH", None)
 
 STRING_SESSION = os.environ.get("STRING_SESSION", None)
 
+DEEZER_ARL_TOKEN = os.environ.get("DEEZER_ARL_TOKEN", None).
+
 OPEN_WEATHER_MAP_APPID = os.environ.get("OPEN_WEATHER_MAP_APPID", None)
 OPEN_WEATHER_MAP_DEFCITY = os.environ.get("OPEN_WEATHER_MAP_DEFCITY", None)
 
