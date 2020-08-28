@@ -153,9 +153,7 @@ async def promote(promt):
     await promt.edit("`Promoting...`")
 
     user = await get_user_from_event(promt)
-    if user:
-        pass
-    else:
+    if not user:
         return
 
     # Try to promote if current user is admin or creator
@@ -194,9 +192,7 @@ async def demote(dmod):
     await dmod.edit("`Demoting...`")
 
     user = await get_user_from_event(dmod)
-    if user:
-        pass
-    else:
+    if not user:
         return
 
     # New rights after demotion
@@ -294,9 +290,7 @@ async def nothanos(unbon):
     await unbon.edit("`Unbanning...`")
 
     user = await get_user_from_event(unbon)
-    if user:
-        pass
-    else:
+    if not user:
         return
 
     try:

@@ -111,9 +111,8 @@ async def get_weather(weather):
             return temp[0]
 
         def sun(unix):
-            xx = datetime.fromtimestamp(unix, tz=ctimezone).strftime(
+            return datetime.fromtimestamp(unix, tz=ctimezone).strftime(
                 "%H:%M").lstrip("0").replace(" 0", " ")
-            return xx
 
         await weather.edit(
             f"**{cityname}, {fullc_n}**\n"

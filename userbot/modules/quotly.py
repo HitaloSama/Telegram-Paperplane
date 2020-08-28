@@ -66,154 +66,155 @@ if 1 == 1:
     client = bot
 
     @register(outgoing=True, pattern=r"^\.q$")
-    async def quotecmd(message):  # noqa: C901
+    async def quotecmd(message):    # noqa: C901
         """Quote a message.
         Usage: .quote [template]
         If template is missing, possible templates are fetched."""
-        if not message.text[0].isalpha() and message.text[0] in ("."):
-            await message.delete()
-            args = message.raw_text.split(" ")[1:]
-            if args == []:
-                args = ["default"]
-            reply = await message.get_reply_message()
+        if message.text[0].isalpha() or message.text[0] not in ".":
+            return
+        await message.delete()
+        args = message.raw_text.split(" ")[1:]
+        if args == []:
+            args = ["default"]
+        reply = await message.get_reply_message()
 
-            if not reply:
-                return await message.respond(strings["no_reply"])
+        if not reply:
+            return await message.respond(strings["no_reply"])
 
-            if not args:
-                return await message.respond(strings["no_template"])
+        if not args:
+            return await message.respond(strings["no_template"])
 
-            username_color = username = admintitle = user_id = None
-            profile_photo_url = reply.from_id
+        username_color = username = admintitle = user_id = None
+        profile_photo_url = reply.from_id
 
-            admintitle = ""
-            if isinstance(message.to_id, telethon.tl.types.PeerChannel):
-                try:
-                    user = await client(telethon.tl.functions.channels.GetParticipantRequest(message.chat_id,
-                                                                                             reply.from_id))
-                    if isinstance(user.participant,
-                                  telethon.tl.types.ChannelParticipantCreator):
-                        admintitle = user.participant.rank or strings["creator"]
-                    elif isinstance(user.participant, telethon.tl.types.ChannelParticipantAdmin):
-                        admintitle = user.participant.rank or strings["admin"]
-                    user = user.users[0]
-                except telethon.errors.rpcerrorlist.UserNotParticipantError:
-                    user = await reply.get_sender()
-            elif isinstance(message.to_id, telethon.tl.types.PeerChat):
-                chat = await client(telethon.tl.functions.messages.GetFullChatRequest(reply.to_id))
-                participants = chat.full_chat.participants.participants
-                participant = next(
-                    filter(
-                        lambda x: x.user_id == reply.from_id,
-                        participants),
-                    None)
-                if isinstance(participant,
-                              telethon.tl.types.ChatParticipantCreator):
-                    admintitle = strings["creator"]
-                elif isinstance(participant, telethon.tl.types.ChatParticipantAdmin):
-                    admintitle = strings["admin"]
+        admintitle = ""
+        if isinstance(message.to_id, telethon.tl.types.PeerChannel):
+            try:
+                user = await client(telethon.tl.functions.channels.GetParticipantRequest(message.chat_id,
+                                                                                         reply.from_id))
+                if isinstance(user.participant,
+                              telethon.tl.types.ChannelParticipantCreator):
+                    admintitle = user.participant.rank or strings["creator"]
+                elif isinstance(user.participant, telethon.tl.types.ChannelParticipantAdmin):
+                    admintitle = user.participant.rank or strings["admin"]
+                user = user.users[0]
+            except telethon.errors.rpcerrorlist.UserNotParticipantError:
                 user = await reply.get_sender()
+        elif isinstance(message.to_id, telethon.tl.types.PeerChat):
+            chat = await client(telethon.tl.functions.messages.GetFullChatRequest(reply.to_id))
+            participants = chat.full_chat.participants.participants
+            participant = next(
+                filter(
+                    lambda x: x.user_id == reply.from_id,
+                    participants),
+                None)
+            if isinstance(participant,
+                          telethon.tl.types.ChatParticipantCreator):
+                admintitle = strings["creator"]
+            elif isinstance(participant, telethon.tl.types.ChatParticipantAdmin):
+                admintitle = strings["admin"]
+            user = await reply.get_sender()
+        else:
+            user = await reply.get_sender()
+
+        username = telethon.utils.get_display_name(user)
+        user_id = reply.from_id
+
+        if reply.fwd_from:
+            if reply.fwd_from.saved_from_peer:
+                username = telethon.utils.get_display_name(
+                    reply.forward.chat)
+                profile_photo_url = reply.forward.chat
+                admintitle = strings["channel"]
+            elif reply.fwd_from.from_name:
+                username = reply.fwd_from.from_name
+            elif reply.forward.sender:
+                username = telethon.utils.get_display_name(
+                    reply.forward.sender)
+            elif reply.forward.chat:
+                username = telethon.utils.get_display_name(
+                    reply.forward.chat)
+
+        pfp = await client.download_profile_photo(profile_photo_url, bytes)
+        if pfp is not None:
+            profile_photo_url = "data:image/png;base64, " + \
+                base64.b64encode(pfp).decode()
+
+        if user_id is not None:
+            username_color = config["username_colors"][user_id % 7]
+        else:
+            username_color = config["default_username_color"]
+
+        request = json.dumps({
+            "ProfilePhotoURL": profile_photo_url,
+            "usernameColor": username_color,
+            "username": username,
+            "adminTitle": admintitle,
+            "Text": reply.message,
+            "Markdown": get_markdown(reply),
+            "Template": args[0],
+            "APIKey": config["api_token"]
+        })
+
+        resp = requests.post(
+            config["api_url"] +
+            "/api/v2/quote",
+            data=request)
+        resp.raise_for_status()
+        resp = resp.json()
+
+        if resp["status"] == 500:
+            return await message.respond(strings["server_error"])
+        elif resp["status"] == 401:
+            if resp["message"] == "ERROR_TOKEN_INVALID":
+                return await message.respond(strings["invalid_token"])
             else:
-                user = await reply.get_sender()
-
-            username = telethon.utils.get_display_name(user)
-            user_id = reply.from_id
-
-            if reply.fwd_from:
-                if reply.fwd_from.saved_from_peer:
-                    username = telethon.utils.get_display_name(
-                        reply.forward.chat)
-                    profile_photo_url = reply.forward.chat
-                    admintitle = strings["channel"]
-                elif reply.fwd_from.from_name:
-                    username = reply.fwd_from.from_name
-                elif reply.forward.sender:
-                    username = telethon.utils.get_display_name(
-                        reply.forward.sender)
-                elif reply.forward.chat:
-                    username = telethon.utils.get_display_name(
-                        reply.forward.chat)
-
-            pfp = await client.download_profile_photo(profile_photo_url, bytes)
-            if pfp is not None:
-                profile_photo_url = "data:image/png;base64, " + \
-                    base64.b64encode(pfp).decode()
-
-            if user_id is not None:
-                username_color = config["username_colors"][user_id % 7]
+                raise ValueError("Invalid response from server", resp)
+        elif resp["status"] == 403:
+            if resp["message"] == "ERROR_UNAUTHORIZED":
+                return await message.respond(strings["unauthorized"])
             else:
-                username_color = config["default_username_color"]
+                raise ValueError("Invalid response from server", resp)
+        elif resp["status"] == 404:
+            if resp["message"] == "ERROR_TEMPLATE_NOT_FOUND":
+                newreq = requests.post(
+                    config["api_url"] +
+                    "/api/v1/getalltemplates",
+                    data={
+                        "token": config["api_token"]})
+                newreq = newreq.json()
 
-            request = json.dumps({
-                "ProfilePhotoURL": profile_photo_url,
-                "usernameColor": username_color,
-                "username": username,
-                "adminTitle": admintitle,
-                "Text": reply.message,
-                "Markdown": get_markdown(reply),
-                "Template": args[0],
-                "APIKey": config["api_token"]
-            })
-
-            resp = requests.post(
-                config["api_url"] +
-                "/api/v2/quote",
-                data=request)
-            resp.raise_for_status()
-            resp = resp.json()
-
-            if resp["status"] == 500:
-                return await message.respond(strings["server_error"])
-            elif resp["status"] == 401:
-                if resp["message"] == "ERROR_TOKEN_INVALID":
+                if newreq["status"] == "NOT_ENOUGH_PERMISSIONS":
+                    return await message.respond(strings["not_enough_permissions"])
+                elif newreq["status"] == "SUCCESS":
+                    templates = strings["delimiter"].join(
+                        newreq["message"])
+                    return await message.respond(strings["templates"].format(templates))
+                elif newreq["status"] == "INVALID_TOKEN":
                     return await message.respond(strings["invalid_token"])
                 else:
-                    raise ValueError("Invalid response from server", resp)
-            elif resp["status"] == 403:
-                if resp["message"] == "ERROR_UNAUTHORIZED":
-                    return await message.respond(strings["unauthorized"])
-                else:
-                    raise ValueError("Invalid response from server", resp)
-            elif resp["status"] == 404:
-                if resp["message"] == "ERROR_TEMPLATE_NOT_FOUND":
-                    newreq = requests.post(
-                        config["api_url"] +
-                        "/api/v1/getalltemplates",
-                        data={
-                            "token": config["api_token"]})
-                    newreq = newreq.json()
-
-                    if newreq["status"] == "NOT_ENOUGH_PERMISSIONS":
-                        return await message.respond(strings["not_enough_permissions"])
-                    elif newreq["status"] == "SUCCESS":
-                        templates = strings["delimiter"].join(
-                            newreq["message"])
-                        return await message.respond(strings["templates"].format(templates))
-                    elif newreq["status"] == "INVALID_TOKEN":
-                        return await message.respond(strings["invalid_token"])
-                    else:
-                        raise ValueError(
-                            "Invalid response from server", newreq)
-                else:
-                    raise ValueError("Invalid response from server", resp)
-            elif resp["status"] != 200:
+                    raise ValueError(
+                        "Invalid response from server", newreq)
+            else:
                 raise ValueError("Invalid response from server", resp)
+        elif resp["status"] != 200:
+            raise ValueError("Invalid response from server", resp)
 
-            req = requests.get(config["api_url"] + "/cdn/" + resp["message"])
-            req.raise_for_status()
-            file = BytesIO(req.content)
-            file.seek(0)
+        req = requests.get(config["api_url"] + "/cdn/" + resp["message"])
+        req.raise_for_status()
+        file = BytesIO(req.content)
+        file.seek(0)
 
-            img = Image.open(file)
-            with BytesIO() as sticker:
-                img.save(sticker, "webp")
-                sticker.name = "sticker.webp"
-                sticker.seek(0)
-                try:
-                    await reply.reply(file=sticker)
-                except telethon.errors.rpcerrorlist.ChatSendStickersForbiddenError:
-                    await message.respond(strings["cannot_send_stickers"])
-                file.close()
+        img = Image.open(file)
+        with BytesIO() as sticker:
+            img.save(sticker, "webp")
+            sticker.name = "sticker.webp"
+            sticker.seek(0)
+            try:
+                await reply.reply(file=sticker)
+            except telethon.errors.rpcerrorlist.ChatSendStickersForbiddenError:
+                await message.respond(strings["cannot_send_stickers"])
+            file.close()
 
 
 def get_markdown(reply):

@@ -5,6 +5,7 @@
 #
 """ Userbot initialization. """
 
+
 import os
 from distutils.util import strtobool as sb
 from logging import DEBUG, INFO, basicConfig, getLogger
@@ -100,7 +101,7 @@ LASTFM_SECRET = os.environ.get("LASTFM_SECRET") or None
 LASTFM_USERNAME = os.environ.get("LASTFM_USERNAME") or None
 LASTFM_PASSWORD_PLAIN = os.environ.get("LASTFM_PASSWORD") or None
 LASTFM_PASS = md5(LASTFM_PASSWORD_PLAIN)
-if not LASTFM_USERNAME == "None":
+if LASTFM_USERNAME != "None":
     lastfm = LastFMNetwork(api_key=LASTFM_API,
                            api_secret=LASTFM_SECRET,
                            username=LASTFM_USERNAME,

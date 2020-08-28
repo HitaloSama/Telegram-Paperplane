@@ -18,44 +18,47 @@ DELIMITERS = ("/", ":", "|", "_")
 
 def separate_sed(sed_string):
     """ Separate sed arguments. """
-    if (len(sed_string) > 3 and sed_string[3] in DELIMITERS
-            and sed_string.count(sed_string[3]) >= 2):
-        delim = sed_string[3]
-        start = counter = 4
-        while counter < len(sed_string):
-            if sed_string[counter] == "\\":
-                counter += 1
-
-            elif sed_string[counter] == delim:
-                replace = sed_string[start:counter]
-                counter += 1
-                start = counter
-                break
-
+    if (
+        len(sed_string) <= 3
+        or sed_string[3] not in DELIMITERS
+        or sed_string.count(sed_string[3]) < 2
+    ):
+        return None
+    delim = sed_string[3]
+    start = counter = 4
+    while counter < len(sed_string):
+        if sed_string[counter] == "\\":
             counter += 1
 
-        else:
-            return None
-
-        while counter < len(sed_string):
-            if (sed_string[counter] == "\\" and counter + 1 < len(sed_string)
-                    and sed_string[counter + 1] == delim):
-                sed_string = sed_string[:counter] + sed_string[counter + 1:]
-
-            elif sed_string[counter] == delim:
-                replace_with = sed_string[start:counter]
-                counter += 1
-                break
-
+        elif sed_string[counter] == delim:
+            replace = sed_string[start:counter]
             counter += 1
-        else:
-            return replace, sed_string[start:], ""
+            start = counter
+            break
 
-        flags = ""
-        if counter < len(sed_string):
-            flags = sed_string[counter:]
-        return replace, replace_with, flags.lower()
-    return None
+        counter += 1
+
+    else:
+        return None
+
+    while counter < len(sed_string):
+        if (sed_string[counter] == "\\" and counter + 1 < len(sed_string)
+                and sed_string[counter + 1] == delim):
+            sed_string = sed_string[:counter] + sed_string[counter + 1:]
+
+        elif sed_string[counter] == delim:
+            replace_with = sed_string[start:counter]
+            counter += 1
+            break
+
+        counter += 1
+    else:
+        return replace, sed_string[start:], ""
+
+    flags = ""
+    if counter < len(sed_string):
+        flags = sed_string[counter:]
+    return replace, replace_with, flags.lower()
 
 
 @register(outgoing=True, pattern="^sed", ignore_unsafe=True)

@@ -51,8 +51,6 @@ async def github_info(e):
                 valid_repos.append(str(repo))
             except UnknownObjectException:
                 invalid_repos.append(f"{user}/{repo}")
-                pass
-
         message = ""
         if valid_repos:
             message += '\n\n'.join(valid_repos)

@@ -14,8 +14,7 @@ def vercheck() -> str:
 def getData(repoURL):
     try:
         with url.urlopen(APIURL + repoURL + "/releases") as data_raw:
-            repoData = json.loads(data_raw.read().decode())
-            return repoData
+            return json.loads(data_raw.read().decode())
     except BaseException:
         return None
 

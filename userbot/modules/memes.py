@@ -493,28 +493,28 @@ async def slap(replied_user, event):  # builds the slap msg itself
     hit = random.choice(HIT)
     throw = random.choice(THROW)
     emoji = random.choice(EMOJI)
-    caption = "..." + temp.format(victim=slapped,
+    return "..." + temp.format(victim=slapped,
                                   item=item,
                                   hits=hit,
                                   throws=throw,
                                   emoji=emoji)
-    return caption
 
 
 @register(pattern="^.slap(?: |$)(.*)", outgoing=True)
 async def who(event):  # slap
-    if not event.text[0].isalpha() and event.text[0] in ("."):
-        if event.fwd_from:
-            return
-        replied_user = await get_user(event)
-        caption = await slap(replied_user, event)
-        message_id_to_reply = event.message.reply_to_msg_id
-        if not message_id_to_reply:
-            message_id_to_reply = None
-        try:
-            await event.edit(caption)
-        except BaseException:
-            await event.edit("`Can't slap this person, loading 12 gauge buckshot in my shotgun!!`")
+    if event.text[0].isalpha() or event.text[0] not in ".":
+        return
+    if event.fwd_from:
+        return
+    replied_user = await get_user(event)
+    caption = await slap(replied_user, event)
+    message_id_to_reply = event.message.reply_to_msg_id
+    if not message_id_to_reply:
+        message_id_to_reply = None
+    try:
+        await event.edit(caption)
+    except BaseException:
+        await event.edit("`Can't slap this person, loading 12 gauge buckshot in my shotgun!!`")
 
 
 @register(outgoing=True, pattern=r"^\.cry$")
@@ -558,10 +558,7 @@ async def copypasta(cp_e):
         elif owo.lower() == b_char:
             reply_text += "🅱️"
         else:
-            if bool(random.getrandbits(1)):
-                reply_text += owo.upper()
-            else:
-                reply_text += owo.lower()
+            reply_text += owo.upper() if bool(random.getrandbits(1)) else owo.lower()
     reply_text += random.choice(EMOJIS)
     await cp_e.edit(reply_text)
 
@@ -632,7 +629,7 @@ async def zal(zgfy):
             reply_text.append(charac)
             continue
 
-        for _ in range(0, 3):
+        for _ in range(3):
             randint = random.randint(0, 2)
 
             if randint == 0:

@@ -37,9 +37,6 @@ async def who(event: NewMessage.Event):
 
     message_id_to_reply = event.message.reply_to_msg_id
 
-    if not message_id_to_reply:
-        pass
-
     await event.edit(str(user_info), parse_mode="markdown")
 
 
