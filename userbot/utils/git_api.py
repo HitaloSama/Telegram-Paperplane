@@ -1,8 +1,9 @@
-# Copyright (C) 2019 The Raphielscape Company LLC.
+# Copyright 2020 nunopenim @github
 #
-# Licensed under the Raphielscape Public License, Version 1.d (the "License");
-# you may not use this file except in compliance with the License.
+# Licensed under the PEL (Penim Enterprises License), v1.0
 #
+# You may not use this file or any of the content within it, unless in
+# compliance with the PE License
 """
 used to get github api information
 for github module
@@ -11,7 +12,7 @@ for github module
 import json
 import urllib.request as url
 
-VERSION = "1.0.2"
+VERSION = "1.1.0"
 APIURL = "http://api.github.com/repos/"
 
 
@@ -21,12 +22,13 @@ def vercheck() -> str:
 
 # Repo-wise stuff
 
+
 def getData(repoURL):
     try:
         with url.urlopen(APIURL + repoURL + "/releases") as data_raw:
             repoData = json.loads(data_raw.read().decode())
             return repoData
-    except BaseException:
+    except:
         return None
 
 
@@ -39,61 +41,69 @@ def getReleaseData(repoData, index):
 
 # Release-wise stuff
 
+
 def getAuthor(releaseData):
     if releaseData is None:
         return None
-    return releaseData['author']['login']
+    return releaseData["author"]["login"]
 
 
 def getAuthorUrl(releaseData):
     if releaseData is None:
         return None
-    return releaseData['author']['html_url']
+    return releaseData["author"]["html_url"]
 
 
 def getReleaseName(releaseData):
     if releaseData is None:
         return None
-    return releaseData['name']
+    return releaseData["name"]
+
+
+def getReleaseTag(releaseData):
+    if releaseData is None:
+        return None
+    return releaseData["tag_name"]
 
 
 def getReleaseDate(releaseData):
     if releaseData is None:
         return None
-    return releaseData['published_at']
+    return releaseData["published_at"]
 
 
 def getAssetsSize(releaseData):
     if releaseData is None:
         return None
-    return len(releaseData['assets'])
+    return len(releaseData["assets"])
 
 
 def getAssets(releaseData):
     if releaseData is None:
         return None
-    return releaseData['assets']
+    return releaseData["assets"]
 
 
 def getBody(releaseData):  # changelog stuff
     if releaseData is None:
         return None
-    return releaseData['body']
+    return releaseData["body"]
 
 
 # Asset-wise stuff
 
+
 def getReleaseFileName(asset):
-    return asset['name']
+    return asset["name"]
 
 
 def getReleaseFileURL(asset):
-    return asset['browser_download_url']
+    return asset["browser_download_url"]
 
 
 def getDownloadCount(asset):
-    return asset['download_count']
+    return asset["download_count"]
 
 
 def getSize(asset):
-    return asset['size']
+    return asset["size"]
